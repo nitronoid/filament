@@ -102,26 +102,26 @@ set(TOOLS ${CMAKE_CURRENT_SOURCE_DIR}/tools)
 # ==================================================================================================
 set(MIN_CLANG_VERSION "5.0")
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
-    if (CMAKE_C_COMPILER_VERSION VERSION_LESS MIN_CLANG_VERSION)
-        message(FATAL_ERROR "Detected C compiler Clang ${CMAKE_C_COMPILER_VERSION} < ${MIN_CLANG_VERSION}")
-    endif()
-else()
-    message(FATAL_ERROR "Detected C compiler ${CMAKE_C_COMPILER_ID} is unsupported")
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS MIN_CLANG_VERSION)
-        message(FATAL_ERROR "Detected CXX compiler Clang ${CMAKE_CXX_COMPILER_VERSION} < ${MIN_CLANG_VERSION}")
-    endif()
-else()
-    message(FATAL_ERROR "Detected CXX compiler ${CMAKE_CXX_COMPILER_ID} is unsupported")
-endif()
-
-# Detect use of the clang-cl.exe frontend, which does not support all of clangs normal options
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
-    set(CLANG_CL true)
-endif()
+#if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+#    if (CMAKE_C_COMPILER_VERSION VERSION_LESS MIN_CLANG_VERSION)
+#        message(FATAL_ERROR "Detected C compiler Clang ${CMAKE_C_COMPILER_VERSION} < ${MIN_CLANG_VERSION}")
+#    endif()
+#else()
+#    message(FATAL_ERROR "Detected C compiler ${CMAKE_C_COMPILER_ID} is unsupported")
+#endif()
+#
+#if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS MIN_CLANG_VERSION)
+#        message(FATAL_ERROR "Detected CXX compiler Clang ${CMAKE_CXX_COMPILER_VERSION} < ${MIN_CLANG_VERSION}")
+#    endif()
+#else()
+#    message(FATAL_ERROR "Detected CXX compiler ${CMAKE_CXX_COMPILER_ID} is unsupported")
+#endif()
+#
+## Detect use of the clang-cl.exe frontend, which does not support all of clangs normal options
+#if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+#    set(CLANG_CL true)
+#endif()
 
 # ==================================================================================================
 # General compiler flags
@@ -142,10 +142,11 @@ if (WIN32)
 endif()
 
 if (LINUX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  #link_libraries("-static-libgcc -static-libstdc++")
+  #link_libraries(libc++.a)
+  #link_libraries(libc++abi.a)
     link_libraries("-static-libgcc -static-libstdc++")
-    link_libraries(libc++.a)
-    link_libraries(libc++abi.a)
 endif()
 
 if (CYGWIN)
@@ -326,7 +327,8 @@ function(get_resgen_vars ARCHIVE_DIR ARCHIVE_NAME)
         ${ARCHIVE_DIR}/${ARCHIVE_NAME}.apple.S
         ${ARCHIVE_DIR}/${ARCHIVE_NAME}.h
     )
-    set(ASM_ARCH_FLAG "-arch ${DIST_ARCH}")
+  #set(ASM_ARCH_FLAG "-arch ${DIST_ARCH}")
+    set(ASM_ARCH_FLAG "-march=x86-64")
     if (APPLE)
         set(ASM_SUFFIX ".apple")
     endif()

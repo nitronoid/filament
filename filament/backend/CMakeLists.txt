@@ -219,7 +219,7 @@ else()
         #        -fslp-vectorize-aggressive
         -fvisibility=hidden
         -fvisibility-inlines-hidden
-        -fstrict-vtable-pointers
+        #-fstrict-vtable-pointers
     )
 endif()
 
@@ -232,11 +232,11 @@ set(LINUX_COMPILER_FLAGS
 )
 
 set(FILAMENT_WARNINGS
-        -Wextra -Wno-unused-parameter
-        -Wextra-semi -Wnewline-eof -Wdeprecated -Wundef
-        -Wgnu-conditional-omitted-operand
-        -Wweak-vtables -Wnon-virtual-dtor -Wclass-varargs -Wimplicit-fallthrough
-        -Wover-aligned
+  #     -Wextra -Wno-unused-parameter
+  #     -Wextra-semi -Wnewline-eof -Wdeprecated -Wundef
+  #     -Wgnu-conditional-omitted-operand
+  #     -Wweak-vtables -Wnon-virtual-dtor -Wclass-varargs -Wimplicit-fallthrough
+  #     -Wover-aligned -Wno-error
 )
 
 # clang-cl maps -Wall to -Weverything, which clutters logs with benign -Wc++98-compat warnings
@@ -244,7 +244,7 @@ set(FILAMENT_WARNINGS
 if (CLANG_CL)
     set(FILAMENT_WARNINGS /W4 ${FILAMENT_WARNINGS})
 else()
-    set(FILAMENT_WARNINGS -Wall ${FILAMENT_WARNINGS})
+    set(FILAMENT_WARNINGS -Wno-error -Wall ${FILAMENT_WARNINGS})
 endif()
 
 target_compile_options(${TARGET} PRIVATE
