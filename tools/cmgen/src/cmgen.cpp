@@ -40,6 +40,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 #include <getopt/getopt.h>
 

@@ -95,7 +95,7 @@ public:
             lhs.nr -= rhs.nr;
             lhs.time_enabled -= rhs.time_enabled;
             lhs.time_running -= rhs.time_running;
-            for (size_t i = 0; i < EVENT_COUNT; ++i) {
+            for (size_t i = 0; i < Profiler::EVENT_COUNT; ++i) {
                 lhs.counters[i].value -= rhs.counters[i].value;
             }
             return lhs;
@@ -165,6 +165,8 @@ public:
             return (misses * 1000.0) / getInstructions();
         }
     };
+    friend class Counters;
+    friend Counters operator-(Counters lhs, const Counters& rhs) noexcept;
 
 #if defined(__linux__)
 

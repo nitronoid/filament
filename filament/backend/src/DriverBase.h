@@ -31,8 +31,9 @@
 #include <mutex>
 #include <utility>
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
+#include <memory>
 
 namespace filament {
 namespace backend {

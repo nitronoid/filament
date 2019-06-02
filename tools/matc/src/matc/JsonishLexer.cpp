@@ -15,6 +15,7 @@
  */
 
 #include "JsonishLexer.h"
+#include <cstring>
 
 namespace matc {
 

@@ -255,18 +255,18 @@ VulkanTexture::VulkanTexture(VulkanContext& context, SamplerType target, uint8_t
     }
 
     // Create an appropriately-sized device-only VkImage, but do not fill it yet.
-    VkImageCreateInfo imageInfo {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .extent.width = w,
-        .extent.height = h,
-        .extent.depth = depth,
-        .format = vkformat,
-        .mipLevels = levels,
-        .arrayLayers = 1,
-        .usage = 0,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-    };
+    VkImageCreateInfo imageInfo;
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = w;
+    imageInfo.extent.height = h;
+    imageInfo.extent.depth = depth;
+    imageInfo.format = vkformat;
+    imageInfo.mipLevels = levels;
+    imageInfo.arrayLayers = 1;
+    imageInfo.usage = 0;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
     if (target == SamplerType::SAMPLER_CUBEMAP) {
         imageInfo.arrayLayers = 6;
         imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;

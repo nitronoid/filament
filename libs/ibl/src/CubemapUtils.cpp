@@ -26,7 +26,9 @@
 
 #include <algorithm>
 
-#include <math.h>
+#include <cmath>
+
+#include <cstring>
 
 using namespace filament::math;
 using namespace utils;

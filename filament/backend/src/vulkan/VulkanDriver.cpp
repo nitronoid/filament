@@ -397,18 +397,18 @@ void VulkanDriver::createRenderTargetR(Handle<HwRenderTarget> rth,
             width, height, color.level);
     if (color.handle) {
         auto colorTexture = handle_cast<VulkanTexture>(mHandleMap, color.handle);
-        renderTarget->setColorImage({
+        renderTarget->setColorImage(VulkanAttachment{
+            .format = colorTexture->vkformat,
             .image = colorTexture->textureImage,
-            .view = colorTexture->imageView,
-            .format = colorTexture->vkformat
+            .view = colorTexture->imageView
         });
     }
     if (depth.handle) {
         auto depthTexture = handle_cast<VulkanTexture>(mHandleMap, depth.handle);
-        renderTarget->setDepthImage({
+        renderTarget->setDepthImage(VulkanAttachment{
+            .format = depthTexture->vkformat,
             .image = depthTexture->textureImage,
-            .view = depthTexture->imageView,
-            .format = depthTexture->vkformat
+            .view = depthTexture->imageView
         });
     }
     mDisposer.createDisposable(renderTarget, [this, rth] () {
@@ -694,16 +694,15 @@ void VulkanDriver::beginRenderPass(Handle<HwRenderTarget> rth,
     } else {
         finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
-
-    VkRenderPass renderPass = mFramebufferCache.getRenderPass({
-        .finalLayout = finalLayout,
-        .colorFormat = color.format,
-        .depthFormat = depth.format,
-        .flags.clear         = params.flags.clear,
-        .flags.discardStart  = params.flags.discardStart,
-        .flags.discardEnd    = params.flags.discardEnd,
-        .flags.dependencies  = params.flags.dependencies
-    });
+    VulkanFboCache::RenderPassKey renderPassKey;
+    renderPassKey.finalLayout = finalLayout;
+    renderPassKey.colorFormat = color.format;
+    renderPassKey.depthFormat = depth.format;
+    renderPassKey.flags.clear         = params.flags.clear;
+    renderPassKey.flags.discardStart  = params.flags.discardStart;
+    renderPassKey.flags.discardEnd    = params.flags.discardEnd;
+    renderPassKey.flags.dependencies  = params.flags.dependencies;
+    VkRenderPass renderPass = mFramebufferCache.getRenderPass(renderPassKey);
     mBinder.bindRenderPass(renderPass);
 
     VulkanFboCache::FboKey fbo { .renderPass = renderPass };
@@ -715,15 +714,14 @@ void VulkanDriver::beginRenderPass(Handle<HwRenderTarget> rth,
       fbo.attachments[numAttachments++] = depth.view;
     }
 
-    VkRenderPassBeginInfo renderPassInfo {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = renderPass,
-        .framebuffer = mFramebufferCache.getFramebuffer(fbo, extent.width, extent.height),
-        .renderArea.offset.x = params.viewport.left,
-        .renderArea.offset.y = params.viewport.bottom,
-        .renderArea.extent.width = params.viewport.width,
-        .renderArea.extent.height = params.viewport.height,
-    };
+    VkRenderPassBeginInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = mFramebufferCache.getFramebuffer(fbo, extent.width, extent.height);
+    renderPassInfo.renderArea.offset.x = params.viewport.left;
+    renderPassInfo.renderArea.offset.y = params.viewport.bottom;
+    renderPassInfo.renderArea.extent.width = params.viewport.width;
+    renderPassInfo.renderArea.extent.height = params.viewport.height;
 
     rt->transformClientRectToPlatform(&renderPassInfo.renderArea);
 
@@ -753,8 +751,8 @@ void VulkanDriver::beginRenderPass(Handle<HwRenderTarget> rth,
             .maxDepth = 1.0f
     };
     VkRect2D scissor {
-            .extent = { (uint32_t) viewport.width, (uint32_t) viewport.height },
-            .offset = { std::max(0, (int32_t) viewport.x), std::max(0, (int32_t) viewport.y) }
+            .offset = { std::max(0, (int32_t) viewport.x), std::max(0, (int32_t) viewport.y) },
+            .extent = { (uint32_t) viewport.width, (uint32_t) viewport.height }
     };
 
     mCurrentRenderTarget->transformClientRectToPlatform(&scissor);
@@ -810,8 +808,8 @@ void VulkanDriver::setViewportScissor(
     int32_t top = std::min(bottom + (int32_t) height,
             (int32_t) (mContext.viewport.y + mContext.viewport.height));
     VkRect2D scissor {
-        .extent = { (uint32_t) right - x, (uint32_t) top - y },
-        .offset = { std::max(0, x), std::max(0, y) }
+        .offset = { std::max(0, x), std::max(0, y) },
+        .extent = { (uint32_t) right - x, (uint32_t) top - y }
     };
 
     mCurrentRenderTarget->transformClientRectToPlatform(&scissor);
@@ -1014,7 +1012,7 @@ void VulkanDriver::draw(PipelineState pipelineState, Handle<HwRenderPrimitive> r
 #endif
 
     // Update the VK raster state.
-    mContext.rasterState.depthStencil = {
+    mContext.rasterState.depthStencil = VkPipelineDepthStencilStateCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = (VkBool32) rasterState.depthWrite,

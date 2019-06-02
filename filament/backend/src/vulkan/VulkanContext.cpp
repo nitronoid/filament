@@ -340,10 +340,8 @@ void createSwapChain(VulkanContext& context, VulkanSurfaceContext& surfaceContex
             images.data());
     ASSERT_POSTCONDITION(result == VK_SUCCESS, "vkGetSwapchainImagesKHR error.");
     for (size_t i = 0; i < images.size(); ++i) {
-        surfaceContext.swapContexts[i].attachment = {
-            .image = images[i],
-            .format = surfaceContext.surfaceFormat.format
-        };
+        surfaceContext.swapContexts[i].attachment.image = images[i];
+        surfaceContext.swapContexts[i].attachment.format = surfaceContext.surfaceFormat.format;
     }
     utils::slog.i
             << "vkCreateSwapchain"

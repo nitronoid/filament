@@ -295,14 +295,15 @@ void VulkanBinder::bindProgramBundle(const ProgramBundle& bundle) noexcept {
 }
 
 void VulkanBinder::bindRasterState(const RasterState& rasterState) noexcept {
-    VkPipelineRasterizationStateCreateInfo& raster0 = mPipelineKey.rasterState.rasterization;
-    const VkPipelineRasterizationStateCreateInfo& raster1 = rasterState.rasterization;
-    VkPipelineColorBlendAttachmentState& blend0 = mPipelineKey.rasterState.blending;
-    const VkPipelineColorBlendAttachmentState& blend1 = rasterState.blending;
-    VkPipelineDepthStencilStateCreateInfo& ds0 = mPipelineKey.rasterState.depthStencil;
-    const VkPipelineDepthStencilStateCreateInfo& ds1 = rasterState.depthStencil;
-    VkPipelineMultisampleStateCreateInfo& ms0 = mPipelineKey.rasterState.multisampling;
-    const VkPipelineMultisampleStateCreateInfo& ms1 = rasterState.multisampling;
+    // Cannot bind an lvalue reference to a packed struct member, so we copy
+    VkPipelineRasterizationStateCreateInfo raster0 = mPipelineKey.rasterState.rasterization;
+    const VkPipelineRasterizationStateCreateInfo raster1 = rasterState.rasterization;
+    VkPipelineColorBlendAttachmentState blend0 = mPipelineKey.rasterState.blending;
+    const VkPipelineColorBlendAttachmentState blend1 = rasterState.blending;
+    VkPipelineDepthStencilStateCreateInfo ds0 = mPipelineKey.rasterState.depthStencil;
+    const VkPipelineDepthStencilStateCreateInfo ds1 = rasterState.depthStencil;
+    VkPipelineMultisampleStateCreateInfo ms0 = mPipelineKey.rasterState.multisampling;
+    const VkPipelineMultisampleStateCreateInfo ms1 = rasterState.multisampling;
     if (
             raster0.polygonMode != raster1.polygonMode ||
             raster0.cullMode != raster1.cullMode ||
@@ -322,6 +323,12 @@ void VulkanBinder::bindRasterState(const RasterState& rasterState) noexcept {
         mDirtyPipeline = true;
         mPipelineKey.rasterState = rasterState;
     }
+    // Copy the results back
+    mPipelineKey.rasterState.rasterization = raster0;
+    mPipelineKey.rasterState.blending = blend0;
+    mPipelineKey.rasterState.depthStencil = ds0;
+    mPipelineKey.rasterState.multisampling = ms0;
+
 }
 
 void VulkanBinder::bindRenderPass(VkRenderPass renderPass) noexcept {
@@ -384,11 +391,9 @@ void VulkanBinder::unbindUniformBuffer(VkBuffer uniformBuffer) noexcept {
 }
 
 void VulkanBinder::unbindImageView(VkImageView imageView) noexcept {
-    for (auto& sampler : mDescriptorKey.samplers) {
-        if (sampler.imageView == imageView) {
-            sampler = {
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            };
+    for (int i = 0; i < SAMPLER_BINDING_COUNT; ++i) {
+        if (mDescriptorKey.samplers[i].imageView == imageView) {
+            mDescriptorKey.samplers[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             mDirtyDescriptor = true;
         }
     }
@@ -555,12 +560,13 @@ void VulkanBinder::createLayoutsAndDescriptors() noexcept {
 
     // Create the VkDescriptorPool.
     VkDescriptorPoolSize poolSizes[2] = {};
+    // GCC complains if these are not in the correct order
     VkDescriptorPoolCreateInfo poolInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = 2,
-        .pPoolSizes = &poolSizes[0],
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = MAX_NUM_DESCRIPTORS,
-        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+        .poolSizeCount = 2,
+        .pPoolSizes = &poolSizes[0]
     };
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = poolInfo.maxSets * UBUFFER_BINDING_COUNT;

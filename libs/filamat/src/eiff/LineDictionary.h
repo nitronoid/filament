@@ -34,11 +34,11 @@ public:
     void addLine(const std::string&& line) noexcept;
     size_t getLineCount() const;
 
-    constexpr size_t getSize() const noexcept {
+    size_t getSize() const noexcept {
         return mStorageSize;
     }
 
-    constexpr bool isEmpty() const noexcept {
+    bool isEmpty() const noexcept {
         return mStrings.size() == 0;
     }
 
